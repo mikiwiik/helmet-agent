@@ -59,6 +59,10 @@ async def search_materials(
     if branch:
         resolver = await _ensure_resolver()
         matches = resolver.resolve(branch)
+        if len(matches) > 1 and branch.lower() != matches[0]["translated"].lower():
+            # Ambiguous — report options instead of guessing
+            options = ", ".join(m["translated"] for m in matches[:5])
+            return f"Multiple branches match '{branch}': {options}. Did you mean one of these? Please specify."
         if matches:
             best = matches[0]
             filters.append(f'building:"{best["value"]}"')
@@ -187,16 +191,17 @@ async def list_library_branches(city: str = "Helsinki") -> str:
 
 
 @mcp.tool()
-async def get_opening_hours(library_name: str) -> str:
+async def get_opening_hours(library_name: str, date: str | None = None) -> str:
     """Get opening hours for a Helmet library.
 
     Examples:
     - get_opening_hours(library_name="Kallio")
-    - get_opening_hours(library_name="Oodi")
+    - get_opening_hours(library_name="Oodi", date="2026-03-02")
     - get_opening_hours(library_name="Munkkiniemi")
 
     Args:
         library_name: Library name or short name (e.g. "Kallio", "Munkkiniemi", "Oodi").
+        date: Optional date (YYYY-MM-DD) to get hours for a specific day. Omit for the current week.
     """
     # Search Kirkanta for the library
     libraries = await _kirkanta.search_libraries(name=library_name)
@@ -217,7 +222,11 @@ async def get_opening_hours(library_name: str) -> str:
     lib_id = lib["id"]
 
     # Fetch schedules
-    data = await _kirkanta.get_schedules(lib_id)
+    data = await _kirkanta.get_schedules(
+        lib_id,
+        period_start=date,
+        period_end=date,
+    )
     schedules = data.get("schedules", [])
     address = data.get("address", lib.get("address", {}))
 

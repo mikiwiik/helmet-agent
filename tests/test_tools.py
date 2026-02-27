@@ -80,6 +80,24 @@ class TestSearchMaterials:
 
         assert "Tuntematon sotilas" in result
 
+    @respx.mock
+    async def test_search_ambiguous_branch_reports_options(self):
+        facets_with_haaga = SAMPLE_FACETS + [
+            {"value": "2/Helmet/h/h78/", "translated": "Etelä-Haaga", "count": 10000},
+            {"value": "2/Helmet/h/h79/", "translated": "Pohjois-Haaga", "count": 8000},
+        ]
+        respx.get(f"{FINNA_URL}/search").mock(
+            side_effect=lambda req: _finna_router_with_facets(req, facets_with_haaga),
+        )
+
+        tools._branch_resolver = None
+
+        result = await tools.search_materials(query="books", branch="Haaga")
+
+        assert "Etelä-Haaga" in result
+        assert "Pohjois-Haaga" in result
+        assert "multiple" in result.lower() or "did you mean" in result.lower()
+
 
 class TestGetRecordDetail:
     @respx.mock
@@ -205,6 +223,80 @@ class TestGetOpeningHours:
         assert "Riihitie" in result
 
     @respx.mock
+    async def test_get_opening_hours_with_date(self):
+        respx.get(f"{KIRKANTA_URL}/library").mock(
+            return_value=httpx.Response(200, json={
+                "type": "library",
+                "total": 1,
+                "items": [{
+                    "id": 84860,
+                    "name": "Kallion kirjasto",
+                    "shortName": "Kallio",
+                    "type": "municipal",
+                }],
+            })
+        )
+        respx.get(f"{KIRKANTA_URL}/library/84860").mock(
+            return_value=httpx.Response(200, json={
+                "type": "library",
+                "total": 1,
+                "data": {
+                    "id": 84860,
+                    "name": "Kallion kirjasto",
+                    "schedules": [
+                        {
+                            "date": "2026-03-02",
+                            "closed": False,
+                            "times": [{"from": "08:00", "to": "20:00", "status": 1}],
+                        },
+                    ],
+                },
+            })
+        )
+
+        result = await tools.get_opening_hours(
+            library_name="Kallio", date="2026-03-02"
+        )
+
+        assert "2026-03-02" in result
+        assert "08:00" in result
+
+        # Verify date was passed to Kirkanta
+        schedule_request = respx.calls[-1].request
+        url = str(schedule_request.url)
+        assert "period.start=2026-03-02" in url
+        assert "period.end=2026-03-02" in url
+
+    @respx.mock
+    async def test_get_opening_hours_shortname_fallback(self):
+        """Searching by name returns nothing, but shortName local filter finds it."""
+        respx.get(f"{KIRKANTA_URL}/library").mock(
+            side_effect=_kirkanta_name_router,
+        )
+        respx.get(f"{KIRKANTA_URL}/library/84860").mock(
+            return_value=httpx.Response(200, json={
+                "type": "library",
+                "total": 1,
+                "data": {
+                    "id": 84860,
+                    "name": "Kallion kirjasto",
+                    "schedules": [
+                        {
+                            "date": "2026-02-27",
+                            "closed": False,
+                            "times": [{"from": "08:00", "to": "20:00", "status": 1}],
+                        },
+                    ],
+                },
+            })
+        )
+
+        result = await tools.get_opening_hours(library_name="Kallio")
+
+        assert "Kallion kirjasto" in result
+        assert "08:00" in result
+
+    @respx.mock
     async def test_get_opening_hours_not_found(self):
         respx.get(f"{KIRKANTA_URL}/library").mock(
             return_value=httpx.Response(200, json={
@@ -217,6 +309,53 @@ class TestGetOpeningHours:
         result = await tools.get_opening_hours(library_name="nonexistent")
 
         assert "not found" in result.lower() or "no library" in result.lower()
+
+
+def _kirkanta_name_router(request: httpx.Request) -> httpx.Response:
+    """Simulate Kirkanta returning no results for name=Kallio, but results for broad search."""
+    url = str(request.url)
+    if "name=Kallio" in url or "name=kallio" in url:
+        return httpx.Response(200, json={"type": "library", "total": 0, "items": []})
+    # Broad search returns all libraries
+    return httpx.Response(200, json={
+        "type": "library",
+        "total": 1,
+        "items": [{
+            "id": 84860,
+            "name": "Kallion kirjasto",
+            "shortName": "Kallio",
+            "type": "municipal",
+        }],
+    })
+
+
+def _finna_router_with_facets(
+    request: httpx.Request, facets: list[dict]
+) -> httpx.Response:
+    """Finna router with custom facets."""
+    url = str(request.url)
+    if "facet" in url and "building" in url:
+        return httpx.Response(200, json={
+            "resultCount": 0,
+            "facets": {"building": facets},
+            "status": "OK",
+        })
+    if "xyznonexistent999" in url:
+        return httpx.Response(200, json={
+            "resultCount": 0, "records": [], "status": "OK",
+        })
+    return httpx.Response(200, json={
+        "resultCount": 1,
+        "records": [{
+            "id": "helmet.123",
+            "title": "Test Book",
+            "year": "2020",
+            "formats": [{"value": "0/Book/", "translated": "Kirja"}],
+            "buildings": [{"value": "0/Helmet/", "translated": "Helmet-kirjastot"}],
+            "authors": {"primary": {}, "secondary": [], "corporate": []},
+        }],
+        "status": "OK",
+    })
 
 
 def _finna_router(request: httpx.Request) -> httpx.Response:
