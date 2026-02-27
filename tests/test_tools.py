@@ -29,9 +29,9 @@ class TestSearchMaterials:
         assert "Tuntematon sotilas" in result
         assert "helmet.2280900" in result
 
-        # Verify the request used ~building OR filter with correct branch code
+        # Verify the request used branch filter with correct code
         last_url = str(respx.calls[-1].request.url)
-        assert "~building" in last_url
+        assert "building" in last_url
         assert "h33" in last_url  # Munkkiniemi = h33
 
     @respx.mock
@@ -80,8 +80,8 @@ class TestSearchMaterials:
         assert "multiple" in result.lower() or "did you mean" in result.lower()
 
     @respx.mock
-    async def test_search_uses_or_filter(self):
-        """Verify that building filters use ~ prefix (OR logic)."""
+    async def test_branch_filter_replaces_helmet_wide(self):
+        """When branch is given, use only the branch filter (not 0/Helmet/)."""
         respx.get(f"{FINNA_URL}/search").mock(
             side_effect=_finna_router,
         )
@@ -89,8 +89,21 @@ class TestSearchMaterials:
         await tools.search_materials(query="test", branch="Oodi")
 
         last_url = str(respx.calls[-1].request.url)
-        # Both the Helmet-wide and branch-specific filter should use ~building
-        assert '~building' in last_url
+        # Should have branch-specific filter, not the broad 0/Helmet/ one
+        assert "h00" in last_url  # Oodi = h00
+        assert "0%2FHelmet%2F" not in last_url
+
+    @respx.mock
+    async def test_no_branch_uses_helmet_wide(self):
+        """Without branch, use the 0/Helmet/ filter."""
+        respx.get(f"{FINNA_URL}/search").mock(
+            side_effect=_finna_router,
+        )
+
+        await tools.search_materials(query="test")
+
+        last_url = str(respx.calls[-1].request.url)
+        assert "0%2FHelmet%2F" in last_url
 
 
 class TestGetRecordDetail:

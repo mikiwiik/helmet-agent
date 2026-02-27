@@ -42,9 +42,8 @@ async def search_materials(
         search_type = "Title"
         query = title
 
-    # Build filters — always restrict to Helmet
-    # Use ~building (tilde prefix = OR logic) so branch filter works correctly
-    filters: list[str] = ['~building:"0/Helmet/"']
+    # Build filters — restrict to Helmet or specific branch
+    filters: list[str] = []
 
     # Resolve branch name to building code
     if branch:
@@ -55,7 +54,12 @@ async def search_materials(
             return f"Multiple branches match '{branch}': {options}. Did you mean one of these? Please specify."
         if matches:
             best = matches[0]
-            filters.append(f'~building:"{best["value"]}"')
+            # Use branch filter alone — combining with 0/Helmet/ breaks results
+            filters.append(f'building:"{best["value"]}"')
+        else:
+            filters.append('building:"0/Helmet/"')
+    else:
+        filters.append('building:"0/Helmet/"')
 
     # Format filter
     if material_format:
