@@ -28,12 +28,21 @@ This is an **MCP (Model Context Protocol) server** that exposes library tools to
 
 ## Setup
 
-Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python 3.12+.
+### Prerequisites
+
+- **Python 3.12+** — the programming language runtime. Check with `python3 --version`. Install from [python.org](https://www.python.org/downloads/) if missing.
+- **uv** — a fast Python package manager that handles dependencies and virtual environments. Install with:
+  ```bash
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  ```
+- **Claude Code** or **Claude Desktop** — the AI client that connects to this MCP server. The server itself has no AI — it provides library data tools that Claude calls as needed.
+
+### Install
 
 ```bash
 git clone https://github.com/mikiwiik/helmet-agent.git
 cd helmet-agent
-uv sync
+uv sync    # downloads dependencies into an isolated virtual environment
 ```
 
 Then register the MCP server with your Claude client — see below.
