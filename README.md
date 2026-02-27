@@ -43,7 +43,7 @@ claude mcp add helmet-library -- uv run --directory /path/to/helmet-agent helmet
 ## Development
 
 ```bash
-uv run pytest                    # run unit tests (49 tests)
+uv run pytest                    # run unit tests (49 tests, 7 more with -m integration)
 uv run pytest -m integration     # run end-to-end tests against real APIs
 uv run ruff check                # lint
 ```
