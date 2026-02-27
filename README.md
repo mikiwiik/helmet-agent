@@ -28,12 +28,24 @@ This is an **MCP (Model Context Protocol) server** that exposes library tools to
 
 ## Setup
 
+Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python 3.12+.
+
 ```bash
-# Install
-uv pip install -e .
+# Clone and install dependencies
+git clone https://github.com/mikiwiik/helmet-agent.git
+cd helmet-agent
+uv sync
 
 # Add to Claude Code
-claude mcp add helmet-library -- uv run helmet-agent
+claude mcp add helmet-library -- uv run --directory /path/to/helmet-agent helmet-agent
+```
+
+## Development
+
+```bash
+uv run pytest                    # run unit tests (49 tests)
+uv run pytest -m integration     # run end-to-end tests against real APIs
+uv run ruff check                # lint
 ```
 
 ## Project documentation
@@ -57,4 +69,5 @@ claude mcp add helmet-library -- uv run helmet-agent
 ## Known limitations
 
 - Finna API shows which branches **hold** an item but not real-time loan status (on shelf vs. checked out)
-- Opening hours come from a separate API (Kirkanta), requiring name mapping between the two systems
+- Branch names are mapped via a static lookup table (~70 branches). New branches require a code update.
+- Opening hours come from a separate API (Kirkanta), matched by Finnish library name
