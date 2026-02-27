@@ -45,11 +45,10 @@ Branch name-to-code mapping should be cached locally so it doesn't require a net
    ```bash
    curl -LsSf https://astral.sh/uv/install.sh | sh
    ```
-3. **Claude Code** — Anthropic's CLI tool
-   ```bash
-   npm install -g @anthropic-ai/claude-code
-   ```
-   Requires a valid Anthropic API key or Claude Pro/Max subscription.
+3. **Claude Code** or **Claude Desktop**
+   - Claude Code: `npm install -g @anthropic-ai/claude-code`
+   - Claude Desktop: download from [claude.ai/download](https://claude.ai/download)
+   - Both require a Claude Pro/Max subscription or Anthropic API key.
 
 ### Install the MCP server
 
@@ -59,27 +58,49 @@ cd helmet-agent
 uv sync
 ```
 
-### Register with Claude Code
+### Option A: Register with Claude Code
 
 ```bash
 claude mcp add helmet-library -- uv run --directory /absolute/path/to/helmet-agent helmet-agent
 ```
 
-This tells Claude Code to start the MCP server when needed. Verify it's registered:
+Verify it's registered:
 
 ```bash
 claude mcp list
 ```
 
-### Usage
+Start Claude Code and ask questions naturally. Use `/mcp` inside a session to check server status or restart the server.
 
-Start Claude Code as usual:
+### Option B: Register with Claude Desktop
 
-```bash
-claude
+Open your Claude Desktop config file:
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+You can also reach this via Claude Desktop: **Settings > Developer > Edit Config**.
+
+Add the helmet-library server (create the file if it doesn't exist):
+
+```json
+{
+  "mcpServers": {
+    "helmet-library": {
+      "command": "uv",
+      "args": ["run", "--directory", "/absolute/path/to/helmet-agent", "helmet-agent"]
+    }
+  }
+}
 ```
 
-Then just ask questions in natural language:
+Replace `/absolute/path/to/helmet-agent` with the actual path where you cloned the repo.
+
+Restart Claude Desktop. A hammer icon appears in the input box — click it to verify the helmet-library tools are loaded.
+
+### Usage
+
+Ask questions in natural language:
 
 - "Which books by Väinö Linna are available in Munkkiniemi?"
 - "When is Kallio library open tomorrow?"
@@ -90,6 +111,7 @@ Claude will automatically call the helmet-library tools when your question is ab
 
 ### Troubleshooting
 
-- **"Tool not found"** — run `claude mcp list` to verify the server is registered
+- **"Tool not found"** — Claude Code: run `claude mcp list`. Claude Desktop: check the hammer icon for registered tools.
+- **Server not starting** — verify `uv` is in your PATH (`which uv`). If not, use the full path to `uv` in the config (e.g. `/Users/you/.local/bin/uv`).
 - **Slow first response** — the first API call may take a moment to establish a connection
 - **No results** — try broadening the search (remove branch filter, use different spelling)

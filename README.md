@@ -31,14 +31,50 @@ This is an **MCP (Model Context Protocol) server** that exposes library tools to
 Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) and Python 3.12+.
 
 ```bash
-# Clone and install dependencies
 git clone https://github.com/mikiwiik/helmet-agent.git
 cd helmet-agent
 uv sync
-
-# Add to Claude Code
-claude mcp add helmet-library -- uv run --directory /path/to/helmet-agent helmet-agent
 ```
+
+Then register the MCP server with your Claude client — see below.
+
+### Claude Code
+
+```bash
+claude mcp add helmet-library -- uv run --directory /absolute/path/to/helmet-agent helmet-agent
+```
+
+Verify it's registered:
+
+```bash
+claude mcp list
+```
+
+Then start Claude Code and ask away. Use `/mcp` inside a session to check server status.
+
+### Claude Desktop
+
+Edit your config file:
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
+
+(In Claude Desktop: Settings > Developer > Edit Config)
+
+Add the `helmet-library` server:
+
+```json
+{
+  "mcpServers": {
+    "helmet-library": {
+      "command": "uv",
+      "args": ["run", "--directory", "/absolute/path/to/helmet-agent", "helmet-agent"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop. You should see a hammer icon in the input box — click it to verify the helmet-library tools are available.
 
 ## Development
 
