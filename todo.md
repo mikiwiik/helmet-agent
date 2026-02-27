@@ -27,7 +27,7 @@ An MCP server that exposes Helmet library tools to Claude Code / Claude Desktop.
 | `lookfor` | `väinö linna` | Free-text search query |
 | `type` | `Author`, `Title`, `AllFields` | Search field |
 | `filter[]` | `building:"0/Helmet/"` | Restrict to Helmet libraries |
-| `filter[]` | `building:"2/Helmet/h/h55/"` | Restrict to specific branch |
+| `filter[]` | `building:"2/Helmet/h/h33/"` | Restrict to specific branch (e.g. Munkkiniemi) |
 | `filter[]` | `format:"0/Book/"` | Books only |
 | `field[]` | `title`, `id`, `buildings`, `year`, `authors`, `formats` | Fields to return |
 | `limit` | `20` (max 100) | Results per page |
@@ -42,7 +42,7 @@ Buildings use a hierarchical slash notation:
 - `1/Helmet/h/` — Helsinki, `1/Helmet/e/` — Espoo, `1/Helmet/v/` — Vantaa, `1/Helmet/k/` — Kauniainen
 - `2/Helmet/h/h01/` — Pasila, `2/Helmet/h/h82/` — Roihuvuori, etc.
 
-Branch codes (level 2) need to be discovered via facet queries or maintained as a lookup table.
+Branch codes (level 2) are maintained as a static lookup table in `branch_resolver.py`.
 
 ### Record Fields
 
@@ -93,9 +93,9 @@ Records return: `id`, `title`, `authors`, `formats`, `buildings` (which branches
 - [x] Tool: `list_library_branches(city)` — list available branches
 - [x] Tool: `get_opening_hours(library_name, date)` — Kirkanta lookup with optional date
 - [x] Well-crafted tool docstrings with examples
-- [x] Shared client instances, lazy-initialized branch resolver
+- [x] Shared client instances, auto-loading branch resolver
 - [x] Ambiguous branch handling — reports options instead of guessing
-- [x] 13 integration tests
+- [x] 16 unit tests + 7 integration tests
 
 ### 6. Configuration & usage ✅
 - [x] Add `__main__.py` entry point for `uv run helmet-agent`
