@@ -65,23 +65,22 @@ Records return: `id`, `title`, `authors`, `formats`, `buildings` (which branches
 
 ## Implementation Steps
 
-### 1. Set up project skeleton
-- [ ] Init with `uv init` + `pyproject.toml` (Python 3.12+)
-- [ ] Dependencies: `mcp[cli]`, `httpx`, `pytest`, `ruff`
-- [ ] Create `src/helmet_agent/` and `tests/` directories
+### 1. Set up project skeleton ✅
+- [x] Init with `uv init` + `pyproject.toml` (Python 3.12+)
+- [x] Dependencies: `mcp[cli]`, `httpx`, `pytest`, `ruff`
+- [x] Create `src/helmet_agent/` and `tests/` directories
 
-### 2. Build Finna API client (`src/helmet_agent/finna.py`)
-- [ ] Implement `search(query, type, filters, fields, limit)` → calls `/v1/search`
-- [ ] Implement `get_record(id, fields)` → calls `/v1/record`
-- [ ] Implement `get_building_facets()` → discover branch codes
-- [ ] Handle pagination for large result sets
-- [ ] Tests with mocked HTTP responses
+### 2. Build Finna API client (`src/helmet_agent/finna.py`) ✅
+- [x] Implement `search(query, type, filters, fields, limit)` → calls `/v1/search`
+- [x] Implement `get_record(id, fields)` → calls `/v1/record`
+- [x] Implement `get_building_facets()` → discover branch codes
+- [x] Tests with mocked HTTP responses (10 tests)
 
-### 3. Build branch name resolver (`src/helmet_agent/branch_resolver.py`)
-- [ ] Fetch all Helmet building facets and cache locally
-- [ ] Fuzzy match: "Munkkiniemi" → `2/Helmet/h/h55/`
-- [ ] Handle ambiguity (return multiple matches)
-- [ ] Tests for exact, fuzzy, and ambiguous matches
+### 3. Build branch name resolver (`src/helmet_agent/branch_resolver.py`) ✅
+- [x] Fetch all Helmet building facets via `fetch()`
+- [x] Fuzzy match: "Munkkiniemi" → `2/Helmet/h/h55/`
+- [x] Handle ambiguity (return multiple matches)
+- [x] Tests for exact, fuzzy, and ambiguous matches (9 tests)
 
 ### 4. Build Kirkanta client (`src/helmet_agent/kirkanta.py`)
 - [ ] Implement `search_libraries(city, name)` → calls `/v4/library`
@@ -89,17 +88,23 @@ Records return: `id`, `title`, `authors`, `formats`, `buildings` (which branches
 - [ ] Tests with mocked HTTP responses
 
 ### 5. Build MCP server (`src/helmet_agent/server.py`)
-- [ ] `FastMCP("helmet")` entry point
 - [ ] Tool: `search_materials(query, author, title, format, branch)` — search + branch resolve + format results
 - [ ] Tool: `get_record_detail(record_id)` — full record info
 - [ ] Tool: `list_library_branches(city)` — list available branches
 - [ ] Tool: `get_opening_hours(library_name)` — Kirkanta lookup
-- [ ] Integration tests calling tools end-to-end
+- [ ] Well-crafted tool docstrings with examples (Claude uses these to decide when/how to call)
+- [ ] Shared httpx client instance (not per-call) for connection reuse
+- [ ] Branch resolver initialized once at startup, not per-tool-call
 
 ### 6. Configuration & usage
+- [ ] Add `__main__.py` entry point for `uv run helmet-agent`
 - [ ] Document Claude Code config: `claude mcp add helmet-library`
-- [ ] Add `__main__.py` entry point for `uv run`
 - [ ] Test full flow in Claude Code
+
+### 7. Hardening
+- [ ] Filter `get_building_facets` to Helmet-only entries (currently returns all Finna sources)
+- [ ] End-to-end smoke test hitting real APIs (`@pytest.mark.integration`, skipped by default)
+- [ ] Update `use_cases.md` status as tools are completed
 
 ---
 
