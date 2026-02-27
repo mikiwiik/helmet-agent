@@ -116,6 +116,9 @@ uv run ruff check                # lint
 
 ## Known limitations
 
-- Finna API shows which branches **hold** an item but not real-time loan status (on shelf vs. checked out)
-- Branch names are mapped via a static lookup table (~70 branches). New branches require a code update.
-- Opening hours come from a separate API (Kirkanta), matched by Finnish library name
+- **No loan status** — Finna shows which branches hold an item, but not whether it's currently on shelf or checked out.
+- **Static branch list** — ~70 branches are mapped by name. If a new branch opens, the code needs updating.
+- **No error recovery** — if the Finna or Kirkanta API is down, the tool returns an unhandled error instead of a friendly message.
+- **Opening hours are separate** — hours come from a different API (Kirkanta) and are matched by Finnish library name, which may occasionally miss a match.
+
+See [todo.md](todo.md) for the full backlog.
