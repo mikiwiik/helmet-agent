@@ -6,6 +6,8 @@ mcp = FastMCP("helmet-library")
 
 
 def main() -> None:
+    import helmet_agent.tools  # noqa: F401 — registers tools with mcp
+
     mcp.run()
 
 
