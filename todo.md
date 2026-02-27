@@ -99,12 +99,13 @@ Records return: `id`, `title`, `authors`, `formats`, `buildings` (which branches
 
 ### 6. Configuration & usage ✅
 - [x] Add `__main__.py` entry point for `uv run helmet-agent`
-- [ ] Register and test full flow in Claude Code
+- [x] Register and test full flow in Claude Code
 
-### 7. Hardening
-- [ ] Filter `get_building_facets` to Helmet-only entries (currently returns all Finna sources)
-- [ ] End-to-end smoke test hitting real APIs (`@pytest.mark.integration`, skipped by default)
-- [ ] Update `use_cases.md` status as tools are completed
+### 7. Hardening ✅
+- [x] Replace facet-based branch resolver with verified static mapping (70+ branches)
+- [x] Fix building filter: use branch code alone instead of OR-combining with `0/Helmet/`
+- [x] End-to-end smoke tests hitting real APIs (`@pytest.mark.integration`, skipped by default)
+- [x] Update `use_cases.md` status — all 6 use cases implemented and tested
 
 ---
 
@@ -113,8 +114,9 @@ Records return: `id`, `title`, `authors`, `formats`, `buildings` (which branches
 - **Python** chosen as runtime (see [ADR-001](docs/adr/001-python-runtime.md))
 - **MCP server** as delivery mechanism (see [ADR-005](docs/adr/005-mcp-server-as-delivery.md))
 - **Kirkanta API** confirmed working for opening hours (see [ADR-003](docs/adr/003-kirkanta-api-for-opening-hours.md))
+- **Static branch mapping** over facet API (facets only return level-0 codes, not individual branches)
 
-## Open Questions
+## Known Limitations
 
-- **Real-time availability:** Finna shows which branches *own* an item but not loan status. Accept as known limitation for now.
-- **Branch name mapping:** Need to map between Finna building codes and Kirkanta library IDs. Both use Finnish names — fuzzy match should work.
+- **Real-time availability:** Finna shows which branches *own* an item but not current loan status.
+- **Branch coverage:** Static mapping covers ~70 branches. New branches require a code update.
