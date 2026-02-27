@@ -67,12 +67,14 @@ Add the `helmet-library` server:
 {
   "mcpServers": {
     "helmet-library": {
-      "command": "uv",
+      "command": "/absolute/path/to/uv",
       "args": ["run", "--directory", "/absolute/path/to/helmet-agent", "helmet-agent"]
     }
   }
 }
 ```
+
+**Important:** Use the full path to `uv` — Claude Desktop does not inherit your shell's PATH. Find it with `which uv`.
 
 Restart Claude Desktop. You should see a hammer icon in the input box — click it to verify the helmet-library tools are available.
 

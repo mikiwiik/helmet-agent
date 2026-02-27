@@ -87,14 +87,18 @@ Add the helmet-library server (create the file if it doesn't exist):
 {
   "mcpServers": {
     "helmet-library": {
-      "command": "uv",
+      "command": "/absolute/path/to/uv",
       "args": ["run", "--directory", "/absolute/path/to/helmet-agent", "helmet-agent"]
     }
   }
 }
 ```
 
-Replace `/absolute/path/to/helmet-agent` with the actual path where you cloned the repo.
+Replace both absolute paths:
+- `/absolute/path/to/uv` — full path to the `uv` binary (find with `which uv`)
+- `/absolute/path/to/helmet-agent` — where you cloned the repo
+
+**Important:** Use the full path to `uv`. Claude Desktop does not inherit your shell's PATH, so just `"uv"` will fail silently.
 
 Restart Claude Desktop. A hammer icon appears in the input box — click it to verify the helmet-library tools are loaded.
 
