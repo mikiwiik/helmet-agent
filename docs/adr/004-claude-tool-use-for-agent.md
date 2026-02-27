@@ -1,6 +1,6 @@
 # ADR-004: Claude tool-use for agent orchestration
 
-**Status:** Accepted
+**Status:** Superseded by [ADR-005](005-mcp-server-as-delivery.md)
 **Date:** 2026-02-27
 
 ## Context

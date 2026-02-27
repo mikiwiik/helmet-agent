@@ -3,11 +3,11 @@
 ## Commit discipline
 - **Atomic commits** — each commit does one thing
 - **Conventional commits** — `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`
-- Examples: `feat: add branch name fuzzy resolver`, `test: search client returns paginated results`
+- Examples: `feat: add branch name fuzzy resolver`, `test: search tool returns paginated results`
 
 ## Development approach
 - **TDD** — write a failing test first, then implement, then refactor
-- Tests live alongside source in `tests/` mirroring `src/` structure
+- Tests live in `tests/` mirroring `src/` structure
 - Use `pytest` as the test runner
 
 ## Code style
@@ -16,19 +16,24 @@
 - `ruff` for linting and formatting
 - Keep functions short and focused
 
+## Architecture
+This is an **MCP server** — not a standalone agent. Claude Code/Desktop is the host.
+- We implement tools, not orchestration
+- Each tool is a `@mcp.tool()` decorated async function
+- Tools return strings; Claude handles reasoning and presentation
+
 ## Project structure
 ```
-src/helmet_agent/       # main package
-  finna_client.py       # Finna REST API wrapper
-  kirkanta_client.py    # Kirkanta API wrapper (opening hours)
+src/helmet_agent/
+  server.py             # FastMCP server entry point + tool definitions
+  finna.py              # Finna REST API client
+  kirkanta.py           # Kirkanta API client (opening hours)
   branch_resolver.py    # fuzzy branch name → building code
-  agent.py              # Claude tool-use orchestration
-  tools.py              # tool definitions for the agent
 tests/
-  test_finna_client.py
-  test_kirkanta_client.py
+  test_finna.py
+  test_kirkanta.py
   test_branch_resolver.py
-  test_agent.py
+  test_tools.py         # integration tests for MCP tools
 ```
 
 ## Key files

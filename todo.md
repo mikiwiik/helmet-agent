@@ -1,6 +1,6 @@
 # Helmet Library Agent - Implementation Plan
 
-An AI agent that answers natural-language questions about Helsinki's Helmet library system (books, availability, locations, hours) by querying the public Finna REST API.
+An MCP server that exposes Helmet library tools to Claude Code / Claude Desktop. Users ask natural-language questions; Claude calls the tools and synthesizes answers.
 
 **Example prompt:** "Which books by Väinö Linna are available in Munkkiniemi?"
 
@@ -51,59 +51,63 @@ Records return: `id`, `title`, `authors`, `formats`, `buildings` (which branches
 ### What the API does NOT provide directly
 
 - **Real-time item-level availability** (on shelf / checked out) — the `buildings` field shows which branches have the item in their collection, but not current loan status
-- **Opening hours** — not available via the search/record API; would need scraping from `helmet.finna.fi/OrganisationInfo/Home` or a separate data source (Kirkanta API: `api.kirjastot.fi`)
+- **Opening hours** — not available via the search/record API; use Kirkanta API instead
+
+## Kirkanta API Reference
+
+- **Base URL:** `https://api.kirjastot.fi/v4/`
+- **Auth:** None required
+- **Key endpoint:** `GET /v4/library?city.name=helsinki&with=schedules`
+- Returns: name, address, coordinates, opening hours, contact info
+- 92 Helsinki municipal libraries indexed
 
 ---
 
 ## Implementation Steps
 
 ### 1. Set up project skeleton
-- [ ] Init Python project with `pyproject.toml` (Python 3.12+)
-- [ ] Dependencies: `httpx`, `anthropic`, `pytest`, `ruff`
+- [ ] Init with `uv init` + `pyproject.toml` (Python 3.12+)
+- [ ] Dependencies: `mcp[cli]`, `httpx`, `pytest`, `ruff`
 - [ ] Create `src/helmet_agent/` and `tests/` directories
 
-### 2. Build Finna API client
-- [ ] Implement `search(query, type, filters, fields, limit)` wrapper around `/v1/search`
-- [ ] Implement `get_record(id, fields)` wrapper around `/v1/record`
-- [ ] Implement `get_building_facets(parent_building)` to discover branch codes
-- [ ] Build a **branch name-to-code resolver** (fuzzy match "Munkkiniemi" → `2/Helmet/h/h55/`)
+### 2. Build Finna API client (`src/helmet_agent/finna.py`)
+- [ ] Implement `search(query, type, filters, fields, limit)` → calls `/v1/search`
+- [ ] Implement `get_record(id, fields)` → calls `/v1/record`
+- [ ] Implement `get_building_facets()` → discover branch codes
 - [ ] Handle pagination for large result sets
+- [ ] Tests with mocked HTTP responses
 
-### 3. Integrate Kirkanta API for opening hours
-- [ ] `api.kirjastot.fi` provides library info, opening hours, contact details
-- [ ] Implement `get_library_info(name)` and `get_opening_hours(library_id)`
-- [ ] Map between Finna building codes and Kirkanta library IDs
+### 3. Build branch name resolver (`src/helmet_agent/branch_resolver.py`)
+- [ ] Fetch all Helmet building facets and cache locally
+- [ ] Fuzzy match: "Munkkiniemi" → `2/Helmet/h/h55/`
+- [ ] Handle ambiguity (return multiple matches)
+- [ ] Tests for exact, fuzzy, and ambiguous matches
 
-### 4. Build the agent layer
-- [ ] Define tools the LLM can call:
-  - `search_materials(query, author, title, format, library_branch)`
-  - `get_record_detail(record_id)`
-  - `list_library_branches(city)`
-  - `get_opening_hours(library_name)`
-- [ ] Write system prompt that instructs the LLM how to decompose user questions into tool calls
-- [ ] Use Claude API with tool_use (or Anthropic Agent SDK) to orchestrate
+### 4. Build Kirkanta client (`src/helmet_agent/kirkanta.py`)
+- [ ] Implement `search_libraries(city, name)` → calls `/v4/library`
+- [ ] Implement `get_schedules(library_id)` → calls `/v4/library/{id}?with=schedules`
+- [ ] Tests with mocked HTTP responses
 
-### 5. Branch name resolution
-- [ ] On first run / periodically: fetch all Helmet building facets and cache them
-- [ ] Build fuzzy matcher: user says "Munkkiniemi" → find closest match in cached branch names
-- [ ] Handle ambiguity (ask user to clarify if multiple matches)
+### 5. Build MCP server (`src/helmet_agent/server.py`)
+- [ ] `FastMCP("helmet")` entry point
+- [ ] Tool: `search_materials(query, author, title, format, branch)` — search + branch resolve + format results
+- [ ] Tool: `get_record_detail(record_id)` — full record info
+- [ ] Tool: `list_library_branches(city)` — list available branches
+- [ ] Tool: `get_opening_hours(library_name)` — Kirkanta lookup
+- [ ] Integration tests calling tools end-to-end
 
-### 6. Response formatting
-- [ ] Parse API results into human-readable answers
-- [ ] Include: title, author, year, format, which branches hold it
-- [ ] Link to the Finna record page: `https://helmet.finna.fi/Record/{id}`
-
-### 7. Testing & polish
-- [ ] Test with representative queries (author search, title search, branch filtering)
-- [ ] Handle edge cases: no results, ambiguous branch names, API errors
-- [ ] Add basic CLI interface for interactive use
+### 6. Configuration & usage
+- [ ] Document Claude Code config: `claude mcp add helmet-library`
+- [ ] Add `__main__.py` entry point for `uv run`
+- [ ] Test full flow in Claude Code
 
 ---
 
 ## Resolved Decisions
 
 - **Python** chosen as runtime (see [ADR-001](docs/adr/001-python-runtime.md))
-- **Kirkanta API** confirmed working for opening hours — 92 Helsinki libraries indexed, supports `?with=schedules` (see [ADR-003](docs/adr/003-kirkanta-api-for-opening-hours.md))
+- **MCP server** as delivery mechanism (see [ADR-005](docs/adr/005-mcp-server-as-delivery.md))
+- **Kirkanta API** confirmed working for opening hours (see [ADR-003](docs/adr/003-kirkanta-api-for-opening-hours.md))
 
 ## Open Questions
 
