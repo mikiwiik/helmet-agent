@@ -82,24 +82,24 @@ Records return: `id`, `title`, `authors`, `formats`, `buildings` (which branches
 - [x] Handle ambiguity (return multiple matches)
 - [x] Tests for exact, fuzzy, and ambiguous matches (9 tests)
 
-### 4. Build Kirkanta client (`src/helmet_agent/kirkanta.py`)
-- [ ] Implement `search_libraries(city, name)` → calls `/v4/library`
-- [ ] Implement `get_schedules(library_id)` → calls `/v4/library/{id}?with=schedules`
-- [ ] Tests with mocked HTTP responses
+### 4. Build Kirkanta client (`src/helmet_agent/kirkanta.py`) ✅
+- [x] Implement `search_libraries(city, name)` → calls `/v4/library`
+- [x] Implement `get_schedules(library_id)` → calls `/v4/library/{id}?with=schedules`
+- [x] Tests with mocked HTTP responses (7 tests)
 
-### 5. Build MCP server (`src/helmet_agent/server.py`)
-- [ ] Tool: `search_materials(query, author, title, format, branch)` — search + branch resolve + format results
-- [ ] Tool: `get_record_detail(record_id)` — full record info
-- [ ] Tool: `list_library_branches(city)` — list available branches
-- [ ] Tool: `get_opening_hours(library_name)` — Kirkanta lookup
-- [ ] Well-crafted tool docstrings with examples (Claude uses these to decide when/how to call)
-- [ ] Shared httpx client instance (not per-call) for connection reuse
-- [ ] Branch resolver initialized once at startup, not per-tool-call
+### 5. Build MCP server (`src/helmet_agent/server.py`) ✅
+- [x] Tool: `search_materials(query, author, title, format, branch)` — search + branch resolve + format results
+- [x] Tool: `get_record_detail(record_id)` — full record info
+- [x] Tool: `list_library_branches(city)` — list available branches
+- [x] Tool: `get_opening_hours(library_name, date)` — Kirkanta lookup with optional date
+- [x] Well-crafted tool docstrings with examples
+- [x] Shared client instances, lazy-initialized branch resolver
+- [x] Ambiguous branch handling — reports options instead of guessing
+- [x] 13 integration tests
 
-### 6. Configuration & usage
-- [ ] Add `__main__.py` entry point for `uv run helmet-agent`
-- [ ] Document Claude Code config: `claude mcp add helmet-library`
-- [ ] Test full flow in Claude Code
+### 6. Configuration & usage ✅
+- [x] Add `__main__.py` entry point for `uv run helmet-agent`
+- [ ] Register and test full flow in Claude Code
 
 ### 7. Hardening
 - [ ] Filter `get_building_facets` to Helmet-only entries (currently returns all Finna sources)
