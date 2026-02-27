@@ -39,7 +39,8 @@ tests/
 ```
 
 ## Key files
-- `docs/adr/` — Architecture Decision Records
+- `todo.md` — Backlog of remaining work
+- `docs/api-reference.md` — Finna and Kirkanta API reference
 - `docs/requirements.md` — Functional and non-functional requirements
 - `docs/use_cases.md` — Expressed and tested use cases
-- `todo.md` — Implementation checklist
+- `docs/adr/` — Architecture Decision Records

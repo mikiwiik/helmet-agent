@@ -53,7 +53,8 @@ uv run ruff check                # lint
 | File | Contents |
 |------|----------|
 | [CLAUDE.md](CLAUDE.md) | Development practices (atomic commits, conventional commits, TDD) |
-| [todo.md](todo.md) | Implementation checklist with API reference |
+| [todo.md](todo.md) | Backlog of remaining work |
+| [docs/api-reference.md](docs/api-reference.md) | Finna and Kirkanta API reference |
 | [docs/requirements.md](docs/requirements.md) | Functional and non-functional requirements |
 | [docs/use_cases.md](docs/use_cases.md) | User-facing scenarios and test cases |
 | [docs/adr/](docs/adr/) | Architecture Decision Records |
