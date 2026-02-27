@@ -5,20 +5,10 @@ from helmet_agent.finna import FinnaClient
 from helmet_agent.kirkanta import KirkantaClient
 from helmet_agent.server import mcp
 
-# Shared instances — initialized lazily
+# Shared instances
 _finna = FinnaClient()
 _kirkanta = KirkantaClient()
-_branch_resolver: BranchResolver | None = None
-
-
-async def _ensure_resolver() -> BranchResolver:
-    """Ensure the branch resolver is initialized."""
-    global _branch_resolver
-    if _branch_resolver is None:
-        resolver = BranchResolver()
-        await resolver.fetch(_finna)
-        _branch_resolver = resolver
-    return _branch_resolver
+_resolver = BranchResolver()
 
 
 @mcp.tool()
@@ -53,19 +43,19 @@ async def search_materials(
         query = title
 
     # Build filters — always restrict to Helmet
-    filters: list[str] = ['building:"0/Helmet/"']
+    # Use ~building (tilde prefix = OR logic) so branch filter works correctly
+    filters: list[str] = ['~building:"0/Helmet/"']
 
     # Resolve branch name to building code
     if branch:
-        resolver = await _ensure_resolver()
-        matches = resolver.resolve(branch)
+        matches = _resolver.resolve(branch)
         if len(matches) > 1 and branch.lower() != matches[0]["translated"].lower():
             # Ambiguous — report options instead of guessing
             options = ", ".join(m["translated"] for m in matches[:5])
             return f"Multiple branches match '{branch}': {options}. Did you mean one of these? Please specify."
         if matches:
             best = matches[0]
-            filters.append(f'building:"{best["value"]}"')
+            filters.append(f'~building:"{best["value"]}"')
 
     # Format filter
     if material_format:
@@ -160,27 +150,12 @@ async def list_library_branches(city: str = "Helsinki") -> str:
     Args:
         city: City name — "Helsinki", "Espoo", "Vantaa", or "Kauniainen".
     """
-    resolver = await _ensure_resolver()
-
-    city_map = {
-        "helsinki": "1/Helmet/h/",
-        "espoo": "1/Helmet/e/",
-        "vantaa": "1/Helmet/v/",
-        "kauniainen": "1/Helmet/k/",
-    }
-
-    city_prefix = city_map.get(city.lower())
-    if not city_prefix:
-        return f"Unknown city '{city}'. Supported: Helsinki, Espoo, Vantaa, Kauniainen."
-
-    branch_prefix = city_prefix.replace("1/", "2/")
-
-    branches = [
-        f for f in (resolver._facets or [])
-        if f["value"].startswith(branch_prefix)
-    ]
+    branches = _resolver.list_branches(city=city)
 
     if not branches:
+        valid = ["Helsinki", "Espoo", "Vantaa", "Kauniainen"]
+        if city.lower() not in [c.lower() for c in valid]:
+            return f"Unknown city '{city}'. Supported: {', '.join(valid)}."
         return f"No branches found for {city}."
 
     lines = [f"Helmet library branches in {city} ({len(branches)}):\n"]

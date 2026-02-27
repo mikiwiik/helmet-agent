@@ -10,19 +10,6 @@ from helmet_agent import tools
 FINNA_URL = "https://api.finna.fi/v1"
 KIRKANTA_URL = "https://api.kirjastot.fi/v4"
 
-# Sample building facets returned by Finna
-SAMPLE_FACETS = [
-    {"value": "0/Helmet/", "translated": "Helmet-kirjastot", "count": 795567},
-    {"value": "1/Helmet/h/", "translated": "Helsinki", "count": 400000},
-    {"value": "1/Helmet/e/", "translated": "Espoo", "count": 200000},
-    {"value": "1/Helmet/v/", "translated": "Vantaa", "count": 150000},
-    {"value": "1/Helmet/k/", "translated": "Kauniainen", "count": 30000},
-    {"value": "2/Helmet/h/h01/", "translated": "Pasila", "count": 50000},
-    {"value": "2/Helmet/h/h55/", "translated": "Munkkiniemi", "count": 20000},
-    {"value": "2/Helmet/h/h82/", "translated": "Roihuvuori", "count": 15000},
-    {"value": "2/Helmet/v/v30/", "translated": "Tikkurila", "count": 22000},
-]
-
 
 def test_server_has_name():
     assert mcp.name == "helmet-library"
@@ -31,26 +18,27 @@ def test_server_has_name():
 class TestSearchMaterials:
     @respx.mock
     async def test_search_by_author_and_branch(self):
-        # Mock facet fetch for branch resolver init
         respx.get(f"{FINNA_URL}/search").mock(
             side_effect=_finna_router,
         )
 
-        tools._branch_resolver = None  # reset state
-
-        result = await tools.search_materials(query="väinö linna", author="väinö linna", branch="Munkkiniemi")
+        result = await tools.search_materials(
+            query="väinö linna", author="väinö linna", branch="Munkkiniemi"
+        )
 
         assert "Tuntematon sotilas" in result
         assert "helmet.2280900" in result
-        assert "Munkkiniemi" in result or "Pasila" in result
+
+        # Verify the request used ~building OR filter with correct branch code
+        last_url = str(respx.calls[-1].request.url)
+        assert "~building" in last_url
+        assert "h33" in last_url  # Munkkiniemi = h33
 
     @respx.mock
     async def test_search_no_results(self):
         respx.get(f"{FINNA_URL}/search").mock(
             side_effect=_finna_router,
         )
-
-        tools._branch_resolver = None
 
         result = await tools.search_materials(query="xyznonexistent999")
 
@@ -62,11 +50,12 @@ class TestSearchMaterials:
             side_effect=_finna_router,
         )
 
-        tools._branch_resolver = None
-
         result = await tools.search_materials(query="sinuhe", material_format="Book")
 
         assert isinstance(result, str)
+        # Verify format filter was passed
+        last_url = str(respx.calls[-1].request.url)
+        assert "format" in last_url
 
     @respx.mock
     async def test_search_without_branch(self):
@@ -74,29 +63,34 @@ class TestSearchMaterials:
             side_effect=_finna_router,
         )
 
-        tools._branch_resolver = None
-
         result = await tools.search_materials(query="tuntematon sotilas")
 
         assert "Tuntematon sotilas" in result
 
     @respx.mock
     async def test_search_ambiguous_branch_reports_options(self):
-        facets_with_haaga = SAMPLE_FACETS + [
-            {"value": "2/Helmet/h/h78/", "translated": "Etelä-Haaga", "count": 10000},
-            {"value": "2/Helmet/h/h79/", "translated": "Pohjois-Haaga", "count": 8000},
-        ]
         respx.get(f"{FINNA_URL}/search").mock(
-            side_effect=lambda req: _finna_router_with_facets(req, facets_with_haaga),
+            side_effect=_finna_router,
         )
-
-        tools._branch_resolver = None
 
         result = await tools.search_materials(query="books", branch="Haaga")
 
         assert "Etelä-Haaga" in result
         assert "Pohjois-Haaga" in result
         assert "multiple" in result.lower() or "did you mean" in result.lower()
+
+    @respx.mock
+    async def test_search_uses_or_filter(self):
+        """Verify that building filters use ~ prefix (OR logic)."""
+        respx.get(f"{FINNA_URL}/search").mock(
+            side_effect=_finna_router,
+        )
+
+        await tools.search_materials(query="test", branch="Oodi")
+
+        last_url = str(respx.calls[-1].request.url)
+        # Both the Helmet-wide and branch-specific filter should use ~building
+        assert '~building' in last_url
 
 
 class TestGetRecordDetail:
@@ -147,23 +141,17 @@ class TestGetRecordDetail:
 
 
 class TestListLibraryBranches:
-    @respx.mock
-    async def test_list_branches(self):
-        respx.get(f"{FINNA_URL}/search").mock(
-            return_value=httpx.Response(200, json={
-                "resultCount": 0,
-                "facets": {"building": SAMPLE_FACETS},
-                "status": "OK",
-            })
-        )
-
-        tools._branch_resolver = None
-
+    async def test_list_helsinki_branches(self):
         result = await tools.list_library_branches(city="Helsinki")
 
         assert "Pasila" in result
         assert "Munkkiniemi" in result
-        assert "Roihuvuori" in result
+        assert "Oodi" in result
+
+    async def test_list_unknown_city(self):
+        result = await tools.list_library_branches(city="Turku")
+
+        assert "Unknown city" in result or "No branches" in result
 
 
 class TestGetOpeningHours:
@@ -329,46 +317,9 @@ def _kirkanta_name_router(request: httpx.Request) -> httpx.Response:
     })
 
 
-def _finna_router_with_facets(
-    request: httpx.Request, facets: list[dict]
-) -> httpx.Response:
-    """Finna router with custom facets."""
-    url = str(request.url)
-    if "facet" in url and "building" in url:
-        return httpx.Response(200, json={
-            "resultCount": 0,
-            "facets": {"building": facets},
-            "status": "OK",
-        })
-    if "xyznonexistent999" in url:
-        return httpx.Response(200, json={
-            "resultCount": 0, "records": [], "status": "OK",
-        })
-    return httpx.Response(200, json={
-        "resultCount": 1,
-        "records": [{
-            "id": "helmet.123",
-            "title": "Test Book",
-            "year": "2020",
-            "formats": [{"value": "0/Book/", "translated": "Kirja"}],
-            "buildings": [{"value": "0/Helmet/", "translated": "Helmet-kirjastot"}],
-            "authors": {"primary": {}, "secondary": [], "corporate": []},
-        }],
-        "status": "OK",
-    })
-
-
 def _finna_router(request: httpx.Request) -> httpx.Response:
     """Route Finna API mocks based on request params."""
     url = str(request.url)
-
-    # Facet request (for branch resolver init)
-    if "facet" in url and "building" in url:
-        return httpx.Response(200, json={
-            "resultCount": 0,
-            "facets": {"building": SAMPLE_FACETS},
-            "status": "OK",
-        })
 
     # Search with nonsense query
     if "xyznonexistent999" in url:
@@ -389,6 +340,7 @@ def _finna_router(request: httpx.Request) -> httpx.Response:
                 "formats": [{"value": "0/Book/", "translated": "Kirja"}],
                 "buildings": [
                     {"value": "0/Helmet/", "translated": "Helmet-kirjastot"},
+                    {"value": "2/Helmet/h/h33/", "translated": "Munkkiniemi"},
                     {"value": "2/Helmet/h/h01/", "translated": "Pasila"},
                 ],
                 "authors": {
