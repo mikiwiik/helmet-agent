@@ -58,9 +58,9 @@ Records return: `id`, `title`, `authors`, `formats`, `buildings` (which branches
 ## Implementation Steps
 
 ### 1. Set up project skeleton
-- [ ] Choose runtime: **Python** (good Finna client library exists) or **TypeScript**
-- [ ] Init project with dependencies
-- [ ] Set up basic project structure
+- [ ] Init Python project with `pyproject.toml` (Python 3.12+)
+- [ ] Dependencies: `httpx`, `anthropic`, `pytest`, `ruff`
+- [ ] Create `src/helmet_agent/` and `tests/` directories
 
 ### 2. Build Finna API client
 - [ ] Implement `search(query, type, filters, fields, limit)` wrapper around `/v1/search`
@@ -100,8 +100,12 @@ Records return: `id`, `title`, `authors`, `formats`, `buildings` (which branches
 
 ---
 
+## Resolved Decisions
+
+- **Python** chosen as runtime (see [ADR-001](docs/adr/001-python-runtime.md))
+- **Kirkanta API** confirmed working for opening hours — 92 Helsinki libraries indexed, supports `?with=schedules` (see [ADR-003](docs/adr/003-kirkanta-api-for-opening-hours.md))
+
 ## Open Questions
 
-- **Python vs TypeScript?** Python has `finna-client` package; TS would need raw HTTP calls
-- **Real-time availability:** The API shows which branches *own* an item but not if it's currently on shelf. Worth investigating if the record detail has holdings/status data, or if we note this limitation
-- **Kirkanta API** for opening hours — needs separate research (`https://api.kirjastot.fi/v4/`)
+- **Real-time availability:** Finna shows which branches *own* an item but not loan status. Accept as known limitation for now.
+- **Branch name mapping:** Need to map between Finna building codes and Kirkanta library IDs. Both use Finnish names — fuzzy match should work.
