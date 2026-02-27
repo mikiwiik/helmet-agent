@@ -33,3 +33,63 @@ Agent responses should complete within a reasonable time (~5-10s) for typical qu
 
 ### NFR-4: Offline-safe branch resolution
 Branch name-to-code mapping should be cached locally so it doesn't require a network call on every query.
+
+---
+
+## Setup Guide
+
+### Prerequisites
+
+1. **Python 3.12+** — check with `python3 --version`
+2. **uv** — fast Python package manager
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+3. **Claude Code** — Anthropic's CLI tool
+   ```bash
+   npm install -g @anthropic-ai/claude-code
+   ```
+   Requires a valid Anthropic API key or Claude Pro/Max subscription.
+
+### Install the MCP server
+
+```bash
+git clone https://github.com/mikiwiik/helmet-agent.git
+cd helmet-agent
+uv sync
+```
+
+### Register with Claude Code
+
+```bash
+claude mcp add helmet-library -- uv run --directory /absolute/path/to/helmet-agent helmet-agent
+```
+
+This tells Claude Code to start the MCP server when needed. Verify it's registered:
+
+```bash
+claude mcp list
+```
+
+### Usage
+
+Start Claude Code as usual:
+
+```bash
+claude
+```
+
+Then just ask questions in natural language:
+
+- "Which books by Väinö Linna are available in Munkkiniemi?"
+- "When is Kallio library open tomorrow?"
+- "Find audiobooks of Sinuhe egyptiläinen in Espoo"
+- "What libraries are there in Vantaa?"
+
+Claude will automatically call the helmet-library tools when your question is about the Helmet library network.
+
+### Troubleshooting
+
+- **"Tool not found"** — run `claude mcp list` to verify the server is registered
+- **Slow first response** — the server fetches and caches branch codes on first use
+- **No results** — try broadening the search (remove branch filter, use different spelling)
