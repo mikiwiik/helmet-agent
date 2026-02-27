@@ -91,5 +91,5 @@ Claude will automatically call the helmet-library tools when your question is ab
 ### Troubleshooting
 
 - **"Tool not found"** — run `claude mcp list` to verify the server is registered
-- **Slow first response** — the server fetches and caches branch codes on first use
+- **Slow first response** — the first API call may take a moment to establish a connection
 - **No results** — try broadening the search (remove branch filter, use different spelling)

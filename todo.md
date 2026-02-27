@@ -77,10 +77,10 @@ Records return: `id`, `title`, `authors`, `formats`, `buildings` (which branches
 - [x] Tests with mocked HTTP responses (10 tests)
 
 ### 3. Build branch name resolver (`src/helmet_agent/branch_resolver.py`) ✅
-- [x] Fetch all Helmet building facets via `fetch()`
-- [x] Fuzzy match: "Munkkiniemi" → `2/Helmet/h/h55/`
+- [x] Static mapping of ~70 Helmet branches to Finna building codes
+- [x] Fuzzy match: "Munkkiniemi" → `2/Helmet/h/h33/`
 - [x] Handle ambiguity (return multiple matches)
-- [x] Tests for exact, fuzzy, and ambiguous matches (9 tests)
+- [x] Tests for exact, fuzzy, ambiguous matches, and branch listing (16 tests)
 
 ### 4. Build Kirkanta client (`src/helmet_agent/kirkanta.py`) ✅
 - [x] Implement `search_libraries(city, name)` → calls `/v4/library`

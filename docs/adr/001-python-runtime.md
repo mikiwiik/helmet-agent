@@ -7,7 +7,7 @@
 Need to choose between Python and TypeScript for the agent implementation.
 
 ## Decision
-Python 3.12+, using `httpx` for async HTTP and `anthropic` SDK for Claude tool-use.
+Python 3.12+, using `httpx` for async HTTP and `mcp` SDK for the MCP server.
 
 ## Rationale
 - Existing `finna-client` package (reference, even if we write our own wrapper)

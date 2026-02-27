@@ -25,15 +25,17 @@ This is an **MCP server** — not a standalone agent. Claude Code/Desktop is the
 ## Project structure
 ```
 src/helmet_agent/
-  server.py             # FastMCP server entry point + tool definitions
+  server.py             # FastMCP server entry point
+  tools.py              # @mcp.tool() definitions (search, record, branches, hours)
   finna.py              # Finna REST API client
   kirkanta.py           # Kirkanta API client (opening hours)
-  branch_resolver.py    # fuzzy branch name → building code
+  branch_resolver.py    # fuzzy branch name → building code (static mapping)
 tests/
   test_finna.py
   test_kirkanta.py
   test_branch_resolver.py
-  test_tools.py         # integration tests for MCP tools
+  test_tools.py         # unit tests for MCP tools (mocked HTTP)
+  test_integration.py   # end-to-end tests against real APIs (@pytest.mark.integration)
 ```
 
 ## Key files
