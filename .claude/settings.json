@@ -3,9 +3,7 @@
     "allow": [
       "Bash(uv run pytest*)",
       "Bash(uv run ruff*)",
-      "Bash(export PATH=\"$HOME/.local/bin:$PATH\" && uv run ruff*)",
-      "Bash(export PATH=\"$HOME/.local/bin:$PATH\" && uv run pytest*)",
-      "Bash(export PATH=\"$HOME/.local/bin:$PATH\" && uv run ruff * && uv run pytest*)"
+      "Bash(export PATH=*uv run*)"
     ]
   }
 }
